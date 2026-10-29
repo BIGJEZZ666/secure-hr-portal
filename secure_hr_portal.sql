@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 29, 2026 at 06:34 AM
+-- Generation Time: Oct 29, 2026 at 09:24 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `a`
+-- Database: `secure_hr_portal`
 --
 
 -- --------------------------------------------------------
@@ -54,9 +54,11 @@ CREATE TABLE `tb_activity_log` (
 
 CREATE TABLE `tb_employee` (
   `employee_id` int(4) NOT NULL COMMENT 'id พนักงาน',
+  `employee_name` varchar(150) DEFAULT NULL,
   `employee_email` varchar(140) NOT NULL COMMENT 'email พนักงาน',
   `password` varchar(255) NOT NULL COMMENT 'รหัสผ่าน',
-  `role_id` int(11) NOT NULL COMMENT 'fk ตำแหน่ง'
+  `role_id` int(11) NOT NULL COMMENT 'fk ตำแหน่ง',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active, 0 = inactive'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -79,6 +81,22 @@ INSERT INTO `tb_role` (`role_id`, `role_name`) VALUES
 (2, 'Hr'),
 (3, 'Employee');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_session`
+--
+
+CREATE TABLE `tb_session` (
+  `session_id` char(36) NOT NULL,
+  `employee_id` int(4) NOT NULL,
+  `token_hash` char(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `expires_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `last_seen_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -93,13 +111,23 @@ ALTER TABLE `tb_activity_log`
 -- Indexes for table `tb_employee`
 --
 ALTER TABLE `tb_employee`
-  ADD PRIMARY KEY (`employee_id`);
+  ADD PRIMARY KEY (`employee_id`),
+  ADD UNIQUE KEY `uq_tb_employee_email` (`employee_email`);
 
 --
 -- Indexes for table `tb_role`
 --
 ALTER TABLE `tb_role`
   ADD PRIMARY KEY (`role_id`);
+
+--
+-- Indexes for table `tb_session`
+--
+ALTER TABLE `tb_session`
+  ADD PRIMARY KEY (`session_id`),
+  ADD UNIQUE KEY `uq_tb_session_token_hash` (`token_hash`),
+  ADD KEY `idx_tb_session_employee` (`employee_id`),
+  ADD KEY `idx_tb_session_expires` (`expires_at`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -122,6 +150,16 @@ ALTER TABLE `tb_employee`
 --
 ALTER TABLE `tb_role`
   MODIFY `role_id` tinyint(1) NOT NULL AUTO_INCREMENT COMMENT '??', AUTO_INCREMENT=4;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `tb_session`
+--
+ALTER TABLE `tb_session`
+  ADD CONSTRAINT `fk_tb_session_employee` FOREIGN KEY (`employee_id`) REFERENCES `tb_employee` (`employee_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
