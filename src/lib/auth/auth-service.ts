@@ -1,0 +1,110 @@
+import "server-only";
+
+import argon2 from "argon2";
+import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
+
+import type {
+  AuthService,
+  StoredUser,
+} from "@/lib/auth/contracts";
+import { userRepository } from "@/lib/auth/user-repository";
+import { sessionStore } from "@/lib/auth/session-store";
+import { hashSessionToken, generateSessionToken } from "@/lib/auth/session-token";
+import {
+  clearSessionCookie,
+  setSessionCookie,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth/session-cookie";
+import { validateSession } from "@/lib/auth/validate-session";
+import type { AuthUser } from "@/types/auth";
+
+function toPublicUser(user: StoredUser): AuthUser {
+  const { passwordHash: _passwordHash, ...publicUser } = user;
+  return publicUser;
+}
+
+export const authService: AuthService = {
+  async authenticate(
+    email: string,
+    password: string,
+  ): Promise<AuthUser | null> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await userRepository.findByEmail(normalizedEmail);
+
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    let passwordMatches = false;
+
+    try {
+      passwordMatches = await argon2.verify(
+        user.passwordHash,
+        password,
+      );
+    } catch {
+      // Invalid or unsupported stored hash: fail closed.
+      return null;
+    }
+
+    if (!passwordMatches) {
+      return null;
+    }
+
+    const token = generateSessionToken();
+    const now = new Date();
+
+    await sessionStore.create({
+      id: randomUUID(),
+      userId: user.id,
+      tokenHash: hashSessionToken(token),
+      createdAt: now,
+      expiresAt: new Date(
+        now.getTime() + SESSION_MAX_AGE_SECONDS * 1000,
+      ),
+    });
+
+    await setSessionCookie(token);
+
+    return toPublicUser(user);
+  },
+
+  async getCurrentUser(): Promise<AuthUser | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+    if (!token) {
+      return null;
+    }
+
+    const tokenHash = hashSessionToken(token);
+    const session = await sessionStore.findByTokenHash(tokenHash);
+
+    if (!session) {
+      return null;
+    }
+
+    const user = await userRepository.findById(session.userId);
+
+    const validUser = validateSession(session, user, new Date());
+
+    if (!validUser) {
+      return null;
+    }
+
+    return toPublicUser(validUser as StoredUser);
+  },
+
+  async logout(): Promise<void> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+    if (token) {
+      await sessionStore.revokeByTokenHash(hashSessionToken(token));
+    }
+
+    await clearSessionCookie();
+  },
+};
