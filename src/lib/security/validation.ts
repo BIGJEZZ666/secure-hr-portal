@@ -11,11 +11,19 @@ export const loginSchema = z
       .email("รูปแบบอีเมลไม่ถูกต้อง")
       .max(254, "อีเมลยาวเกินไป"),
 
-    // Do not trim or transform passwords.
     password: z
       .string()
       .min(1, "กรุณากรอกรหัสผ่าน")
       .max(128, "รหัสผ่านยาวเกินขีดจำกัด"),
+
+    otp: z
+      .string()
+      .trim()
+      .optional()
+      .refine(
+        (value) => value === undefined || value.length === 6,
+        "OTP ต้องเป็นตัวเลข 6 หลัก",
+      ),
   })
   .strict();
 

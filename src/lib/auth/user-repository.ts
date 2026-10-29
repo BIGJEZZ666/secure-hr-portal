@@ -14,6 +14,9 @@ interface EmployeeRow {
   password_hash: string;
   role_name: string | null;
   is_active: number | boolean;
+  two_factor_enabled?: number | boolean;
+  last_activity_at?: string | null;
+  last_login_at?: string | null;
 }
 
 function parseRole(value: string | null): Role | null {
@@ -45,7 +48,9 @@ function mapEmployee(row: EmployeeRow): StoredUser | null {
     email: row.employee_email,
     role,
     isActive: Number(row.is_active) === 1,
-    twoFactorEnabled: false,
+    twoFactorEnabled: Number(row.two_factor_enabled ?? 0) === 1,
+    lastLoginAt: row.last_login_at ?? null,
+    lastActivityAt: row.last_activity_at ?? null,
     passwordHash: row.password_hash,
   };
 }
@@ -57,6 +62,9 @@ const employeeSelect = `
     e.employee_email,
     e.password AS password_hash,
     e.is_active,
+    e.two_factor_enabled,
+    e.last_login_at,
+    e.last_activity_at,
     r.role_name
   FROM tb_employee AS e
   LEFT JOIN tb_role AS r

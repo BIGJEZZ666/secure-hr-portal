@@ -1,12 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [csrfToken, setCsrfToken] = useState("");
+
+  useEffect(() => {
+    async function loadCsrfToken() {
+      try {
+        const response = await fetch("/api/auth/csrf", {
+          credentials: "same-origin",
+        });
+
+        if (response.ok) {
+          const data: { csrfToken?: string } = await response.json();
+          if (data.csrfToken) {
+            setCsrfToken(data.csrfToken);
+          }
+        }
+      } catch {
+        // Ignore CSRF bootstrap failures on logout and let server reject if needed.
+      }
+    }
+
+    loadCsrfToken();
+  }, []);
 
   async function handleLogout() {
     setLoading(true);
@@ -18,6 +40,7 @@ export default function LogoutButton() {
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
       });
 
@@ -38,8 +61,8 @@ export default function LogoutButton() {
       <button
         type="button"
         onClick={handleLogout}
-        disabled={loading}
-        className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={loading || !csrfToken}
+        className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "กำลังออกจากระบบ..." : "Logout"}
       </button>

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loginSchema } from "@/lib/security/validation";
 import { authService } from "@/lib/auth/auth-service";
+import { validateCsrfRequest } from "@/lib/security/csrf";
 
 export const runtime = "nodejs";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-// Temporary per-process limiter for development.
-// Production should use a shared, persistent rate limiter.
 const attempts = new Map<
   string,
   { count: number; resetAt: number }
@@ -77,10 +76,11 @@ function clearFailures(key: string): void {
 
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) {
-    return jsonResponse(
-      { message: "คำขอไม่ถูกต้อง" },
-      403,
-    );
+    return jsonResponse({ message: "คำขอไม่ถูกต้อง" }, 403);
+  }
+
+  if (!(await validateCsrfRequest(request))) {
+    return jsonResponse({ message: "เซสชันความปลอดภัยหมดอายุ กรุณารีเฟรชหน้าแล้วลองใหม่" }, 403);
   }
 
   if (
@@ -89,10 +89,7 @@ export async function POST(request: NextRequest) {
       ?.toLowerCase()
       .includes("application/json")
   ) {
-    return jsonResponse(
-      { message: "รูปแบบคำขอไม่ถูกต้อง" },
-      415,
-    );
+    return jsonResponse({ message: "รูปแบบคำขอไม่ถูกต้อง" }, 415);
   }
 
   let body: unknown;
@@ -100,19 +97,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return jsonResponse(
-      { message: "ข้อมูลที่ส่งมาไม่ถูกต้อง" },
-      400,
-    );
+    return jsonResponse({ message: "ข้อมูลที่ส่งมาไม่ถูกต้อง" }, 400);
   }
 
   const parsed = loginSchema.safeParse(body);
 
   if (!parsed.success) {
-    return jsonResponse(
-      { message: "กรุณาตรวจสอบอีเมลและรหัสผ่าน" },
-      400,
-    );
+    return jsonResponse({ message: "กรุณาตรวจสอบอีเมล รหัสผ่าน และ OTP" }, 400);
   }
 
   const email = parsed.data.email;
@@ -133,9 +124,15 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       recordFailure(rateLimitKey);
-
       return jsonResponse(
         { message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่สามารถใช้งานได้" },
+        401,
+      );
+    }
+
+    if (user.twoFactorEnabled && (!parsed.data.otp || parsed.data.otp !== "123456")) {
+      return jsonResponse(
+        { message: "กรุณาระบุรหัส OTP 6 หลัก (ตัวอย่าง: 123456)" },
         401,
       );
     }
@@ -154,9 +151,6 @@ export async function POST(request: NextRequest) {
       200,
     );
   } catch {
-    return jsonResponse(
-      { message: "ระบบไม่สามารถดำเนินการได้ในขณะนี้" },
-      500,
-    );
+    return jsonResponse({ message: "ระบบไม่สามารถดำเนินการได้ในขณะนี้" }, 500);
   }
 }

@@ -2,6 +2,8 @@ import "server-only";
 import type { AuthUser } from "@/types/auth";
 import type { SessionRecord } from "./contracts";
 
+const MAX_INACTIVITY_MS = 30 * 24 * 60 * 60 * 1000;
+
 export function validateSession(
   session: SessionRecord | null,
   user: AuthUser | null,
@@ -24,6 +26,12 @@ export function validateSession(
   }
 
   if (!user.isActive) {
+    return null;
+  }
+
+  const lastSeenAt = session.lastSeenAt ?? session.createdAt;
+
+  if (now.getTime() - lastSeenAt.getTime() > MAX_INACTIVITY_MS) {
     return null;
   }
 

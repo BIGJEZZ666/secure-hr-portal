@@ -58,7 +58,12 @@ CREATE TABLE `tb_employee` (
   `employee_email` varchar(140) NOT NULL COMMENT 'email พนักงาน',
   `password` varchar(255) NOT NULL COMMENT 'รหัสผ่าน',
   `role_id` int(11) NOT NULL COMMENT 'fk ตำแหน่ง',
-  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active, 0 = inactive'
+  `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active, 0 = inactive',
+  `two_factor_enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = OTP required',
+  `last_login_at` datetime DEFAULT NULL COMMENT 'ล็อกอินล่าสุด',
+  `last_activity_at` datetime DEFAULT NULL COMMENT 'เคลื่อนไหวล่าสุด',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -78,8 +83,25 @@ CREATE TABLE `tb_role` (
 
 INSERT INTO `tb_role` (`role_id`, `role_name`) VALUES
 (1, 'CEO'),
-(2, 'Hr'),
-(3, 'Employee');
+(2, 'HR'),
+(3, 'EMPLOYEE');
+
+INSERT INTO `tb_employee` (
+  `employee_id`,
+  `employee_name`,
+  `employee_email`,
+  `password`,
+  `role_id`,
+  `is_active`,
+  `two_factor_enabled`,
+  `last_login_at`,
+  `last_activity_at`,
+  `created_at`,
+  `updated_at`
+) VALUES
+(1, 'Alicia CEO', 'ceo@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 1, 1, 1, NOW(), NOW(), NOW(), NOW()),
+(2, 'Ben HR', 'hr@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 2, 1, 1, NOW(), NOW(), NOW(), NOW()),
+(3, 'Chris Employee', 'employee@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 3, 1, 0, NOW(), NOW(), NOW(), NOW());
 
 -- --------------------------------------------------------
 
