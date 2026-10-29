@@ -21,11 +21,7 @@ function isSameOrigin(request: NextRequest): boolean {
   }
 }
 
-export async function GET(request: NextRequest) {
-  if (!isSameOrigin(request)) {
-    return NextResponse.json({ message: "คำขอไม่ถูกต้อง" }, { status: 403 });
-  }
-
+export async function GET() {
   const user = await authService.getCurrentUser();
   const allow = authorize(user, "dashboard:view");
 

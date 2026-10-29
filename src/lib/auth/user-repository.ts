@@ -7,25 +7,6 @@ import type {
 } from "@/lib/auth/contracts";
 import type { Role } from "@/types/auth";
 
-const roleIdByName: Record<Role, number> = {
-  CEO: 1,
-  HR: 2,
-  EMPLOYEE: 3,
-};
-
-function roleFromId(value: number): Role | null {
-  switch (value) {
-    case 1:
-      return "CEO";
-    case 2:
-      return "HR";
-    case 3:
-      return "EMPLOYEE";
-    default:
-      return null;
-  }
-}
-
 interface EmployeeRow {
   employee_id: number;
   employee_name: string | null;
@@ -90,9 +71,11 @@ const employeeSelect = `
     ON r.role_id = e.role_id
 `;
 
-function getRoleName(role: Role): string {
-  return role.toUpperCase();
-}
+const roleIdByName: Record<Role, number> = {
+  CEO: 1,
+  HR: 2,
+  EMPLOYEE: 3,
+};
 
 export const userRepository: UserRepository = {
   async create(input): Promise<StoredUser> {

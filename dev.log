@@ -1,0 +1,36 @@
+
+> secure-hr-portal@0.1.0 dev
+> next dev
+
+▲ Next.js 16.4.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.62.116.217:3000
+- Environments: .env.local
+✓ Ready in 1561ms
+✓ Running next.config.ts took 126ms
+
+ HEAD /login 200 in 567ms (next.js: 378ms, application-code: 189ms)
+ GET /api/auth/csrf 200 in 149ms (next.js: 92ms, application-code: 58ms)
+ POST /api/auth/login 400 in 210ms (next.js: 132ms, application-code: 78ms)
+ POST /api/auth/logout 200 in 71ms (next.js: 46ms, application-code: 25ms)
+ GET /dashboard 307 in 217ms (next.js: 55ms, application-code: 162ms)
+ GET /login 200 in 68ms (next.js: 4ms, application-code: 64ms)
+ GET /api/auth/csrf 200 in 21ms (next.js: 3ms, application-code: 18ms)
+ GET /api/auth/csrf 200 in 31ms (next.js: 5ms, application-code: 25ms)
+ GET /login 200 in 77ms (next.js: 4ms, application-code: 72ms)
+ GET /api/auth/csrf 200 in 30ms (next.js: 4ms, application-code: 26ms)
+ GET /api/auth/csrf 200 in 45ms (next.js: 5ms, application-code: 40ms)
+ GET /login 200 in 155ms (next.js: 4ms, application-code: 151ms)
+ GET /api/auth/csrf 200 in 20ms (next.js: 3ms, application-code: 17ms)
+ GET /api/auth/csrf 200 in 25ms (next.js: 4ms, application-code: 21ms)
+ GET / 307 in 132ms (next.js: 15ms, application-code: 117ms)
+ GET /index 307 in 169ms (next.js: 16ms, application-code: 154ms)
+ GET /login 200 in 74ms (next.js: 3ms, application-code: 72ms)
+ GET /api/auth/csrf 200 in 27ms (next.js: 4ms, application-code: 23ms)
+ GET /api/auth/csrf 200 in 20ms (next.js: 2ms, application-code: 18ms)
+ GET /api/auth/csrf 200 in 12ms (next.js: 1.8ms, application-code: 11ms)
+ POST /api/auth/login 403 in 14ms (next.js: 5ms, application-code: 9ms)
+ POST /api/auth/logout 403 in 11ms (next.js: 3ms, application-code: 8ms)
+ GET /api/auth/csrf 200 in 7ms (next.js: 1.2ms, application-code: 6ms)
+ POST /api/auth/login 200 in 123ms (next.js: 1.8ms, application-code: 121ms)
+ POST /api/auth/logout 200 in 18ms (next.js: 1.3ms, application-code: 17ms)

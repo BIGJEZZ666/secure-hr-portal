@@ -21,8 +21,17 @@ import { validateSession } from "@/lib/auth/validate-session";
 import type { AuthUser } from "@/types/auth";
 
 function toPublicUser(user: StoredUser): AuthUser {
-  const { passwordHash: _passwordHash, ...publicUser } = user;
-  return publicUser;
+  return {
+    id: user.id,
+    employeeId: user.employeeId,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isActive: user.isActive,
+    twoFactorEnabled: user.twoFactorEnabled,
+    lastLoginAt: user.lastLoginAt,
+    lastActivityAt: user.lastActivityAt,
+  };
 }
 
 export const authService: AuthService = {
