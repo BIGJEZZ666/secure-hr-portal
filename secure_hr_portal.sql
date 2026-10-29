@@ -180,6 +180,13 @@ ALTER TABLE `tb_role`
 --
 -- Constraints for table `tb_session`
 --
+ALTER TABLE `tb_employee`
+  ADD CONSTRAINT `fk_tb_employee_role` FOREIGN KEY (`role_id`) REFERENCES `tb_role` (`role_id`);
+
+ALTER TABLE `tb_activity_log`
+  ADD CONSTRAINT `fk_tb_activity_employee` FOREIGN KEY (`employee_id`) REFERENCES `tb_employee` (`employee_id`),
+  ADD CONSTRAINT `fk_tb_activity_action` FOREIGN KEY (`action_id`) REFERENCES `tb_action` (`action_id`);
+
 ALTER TABLE `tb_session`
   ADD CONSTRAINT `fk_tb_session_employee` FOREIGN KEY (`employee_id`) REFERENCES `tb_employee` (`employee_id`);
 COMMIT;

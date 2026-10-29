@@ -7,6 +7,25 @@ import type {
 } from "@/lib/auth/contracts";
 import type { Role } from "@/types/auth";
 
+const roleIdByName: Record<Role, number> = {
+  CEO: 1,
+  HR: 2,
+  EMPLOYEE: 3,
+};
+
+function roleFromId(value: number): Role | null {
+  switch (value) {
+    case 1:
+      return "CEO";
+    case 2:
+      return "HR";
+    case 3:
+      return "EMPLOYEE";
+    default:
+      return null;
+  }
+}
+
 interface EmployeeRow {
   employee_id: number;
   employee_name: string | null;
@@ -71,7 +90,84 @@ const employeeSelect = `
     ON r.role_id = e.role_id
 `;
 
+function getRoleName(role: Role): string {
+  return role.toUpperCase();
+}
+
 export const userRepository: UserRepository = {
+  async create(input): Promise<StoredUser> {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    const roleId = roleIdByName[input.role ?? "EMPLOYEE"];
+
+    const result = await db.query(
+      `INSERT INTO tb_employee (
+        employee_name,
+        employee_email,
+        password,
+        role_id,
+        is_active,
+        two_factor_enabled,
+        last_login_at,
+        last_activity_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, 1, 0, NOW(), NOW(), NOW(), NOW())`,
+      [
+        input.name.trim(),
+        normalizedEmail,
+        input.passwordHash,
+        roleId,
+      ],
+    );
+
+    const insertId = Number(
+      Array.isArray((result as { insertId?: number }).insertId)
+        ? (result as { insertId?: number }).insertId
+        : (result as { insertId?: number }).insertId,
+    );
+
+    const row = await db.query(
+      `${employeeSelect} WHERE e.employee_id = ? LIMIT 1`,
+      [insertId],
+    ) as EmployeeRow[];
+
+    if (row.length === 0) {
+      throw new Error("Failed to fetch created user");
+    }
+
+    const mapped = mapEmployee(row[0]);
+    if (!mapped) {
+      throw new Error("Created user is invalid");
+    }
+
+    return mapped;
+  },
+
+  async listAll(): Promise<StoredUser[]> {
+    const rows = await db.query(
+      `${employeeSelect} ORDER BY e.employee_id ASC`,
+    ) as EmployeeRow[];
+
+    return rows
+      .map((row) => mapEmployee(row))
+      .filter((row): row is StoredUser => row !== null);
+  },
+
+  async updateRole(id: string, role: Role): Promise<StoredUser | null> {
+    if (!/^\d+$/.test(id)) {
+      return null;
+    }
+
+    const roleId = roleIdByName[role];
+
+    await db.query(
+      `UPDATE tb_employee SET role_id = ?, updated_at = NOW() WHERE employee_id = ?`,
+      [roleId, Number(id)],
+    );
+
+    return this.findById(id);
+  },
+
   async findById(id: string): Promise<StoredUser | null> {
     if (!/^\d+$/.test(id)) {
       return null;

@@ -10,8 +10,11 @@ const demoAccounts = [
 ];
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("ceo@securehr.local");
   const [password, setPassword] = useState("Password123!");
+  const [confirmPassword, setConfirmPassword] = useState("Password123!");
   const [otp, setOtp] = useState("123456");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,16 +35,15 @@ export default function LoginPage() {
           }
         }
       } catch {
-        // Ignore network or CSRF bootstrap failures; the same-origin guard still protects us.
+        // Ignore network or CSRF bootstrap failures.
       }
     }
 
     loadCsrfToken();
   }, []);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     if (isSubmitting) return;
 
     setMessage("");
@@ -58,7 +60,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password, otp }),
       });
 
-      const result: { message?: string } = await response.json();
+      const result: { message?: string; user?: { role?: string } } = await response.json();
 
       if (!response.ok) {
         setMessage(result.message ?? "ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่");
@@ -69,14 +71,51 @@ export default function LoginPage() {
       setOtp("");
 
       const nextRoute =
-        (result as { user?: { role?: string } }).user?.role === "HR"
+        result.user?.role === "HR"
           ? "/events/manage"
-          : (result as { user?: { role?: string } }).user?.role === "EMPLOYEE"
+          : result.user?.role === "EMPLOYEE"
             ? "/events"
             : "/dashboard";
 
       router.replace(nextRoute);
       router.refresh();
+    } catch {
+      setMessage("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleRegister(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ name, email, password, confirmPassword }),
+      });
+
+      const result: { message?: string } = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.message ?? "ไม่สามารถสมัครสมาชิกได้");
+        return;
+      }
+
+      setMode("login");
+      setName("");
+      setPassword("");
+      setConfirmPassword("");
+      setMessage(result.message ?? "สมัครสมาชิกสำเร็จ");
     } catch {
       setMessage("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่");
     } finally {
@@ -119,81 +158,173 @@ export default function LoginPage() {
           </div>
 
           <div className="p-8 md:p-10">
+            <div className="mb-6 flex rounded-xl bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}
+              >
+                เข้าสู่ระบบ
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("register")}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition ${mode === "register" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"}`}
+              >
+                สมัครสมาชิก
+              </button>
+            </div>
+
             <div className="mb-8 text-center md:text-left">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-700 text-xl font-black text-white shadow-lg shadow-blue-200 md:mx-0">
                 HR
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">เข้าสู่ระบบ</h2>
-              <p className="mt-2 text-sm text-slate-500">กรุณาใช้บัญชีผู้ใช้งานที่ได้รับอนุญาต</p>
+              <h2 className="text-2xl font-bold text-slate-900">{mode === "login" ? "เข้าสู่ระบบ" : "สมัครสมาชิกใหม่"}</h2>
+              <p className="mt-2 text-sm text-slate-500">{mode === "login" ? "กรุณาใช้บัญชีผู้ใช้งานที่ได้รับอนุญาต" : "ผู้ที่สมัครใหม่จะถูกสร้างเป็น Employee เสมอ"}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">อีเมลบริษัท</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="username"
-                  required
-                  maxLength={254}
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  placeholder="กรอกอีเมลบริษัท"
-                />
-              </div>
+            {mode === "login" ? (
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">อีเมลบริษัท</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    maxLength={254}
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="กรอกอีเมลบริษัท"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">รหัสผ่าน</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  maxLength={128}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  placeholder="กรอกรหัสผ่าน"
-                />
-              </div>
+                <div>
+                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">รหัสผ่าน</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    maxLength={128}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="กรอกรหัสผ่าน"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="otp" className="mb-2 block text-sm font-medium text-slate-700">รหัส OTP (6 หลัก)</label>
-                <input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="123456"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                />
-              </div>
+                <div>
+                  <label htmlFor="otp" className="mb-2 block text-sm font-medium text-slate-700">รหัส OTP (6 หลัก)</label>
+                  <input
+                    id="otp"
+                    name="otp"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="123456"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
 
-              {message && (
-                <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
-                  {message}
-                </p>
-              )}
+                {message && (
+                  <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+                    {message}
+                  </p>
+                )}
 
-              <button
-                type="submit"
-                disabled={isSubmitting || !csrfToken}
-                className="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !csrfToken}
+                  className="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-5">
+                <div>
+                  <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700">ชื่อ-นามสกุล</label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="กรอกชื่อ-นามสกุล"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="register-email" className="mb-2 block text-sm font-medium text-slate-700">อีเมล</label>
+                  <input
+                    id="register-email"
+                    name="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="your@email.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="register-password" className="mb-2 block text-sm font-medium text-slate-700">รหัสผ่าน</label>
+                  <input
+                    id="register-password"
+                    name="password"
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="อย่างน้อย 8 ตัวอักษร"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-slate-700">ยืนยันรหัสผ่าน</label>
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  />
+                </div>
+
+                {message && (
+                  <p role="status" className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm leading-6 text-blue-800">
+                    {message}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !csrfToken}
+                  className="w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
+                </button>
+              </form>
+            )}
 
             <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-900">
               <p className="font-medium">สำหรับบุคลากรที่ได้รับอนุญาตเท่านั้น</p>
-              <p className="mt-1 text-xs text-blue-700">หากมีปัญหา กรุณาติดต่อผู้ดูแลระบบและยืนยัน OTP อีกครั้ง</p>
+              <p className="mt-1 text-xs text-blue-700">หากมีปัญหา กรุณาติดต่อผู้ดูแลระบบ</p>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/types/auth";
+import type { AuthUser, Role } from "@/types/auth";
 
 /**
  * Server-side user record.
@@ -36,6 +36,14 @@ export interface CreateSessionInput {
 export interface UserRepository {
   findById(id: string): Promise<StoredUser | null>;
   findByEmail(email: string): Promise<StoredUser | null>;
+  create(input: {
+    name: string;
+    email: string;
+    passwordHash: string;
+    role: Role;
+  }): Promise<StoredUser>;
+  listAll(): Promise<StoredUser[]>;
+  updateRole(id: string, role: Role): Promise<StoredUser | null>;
 }
 
 /**
@@ -62,6 +70,13 @@ export interface AuthService {
     email: string,
     password: string,
   ): Promise<AuthUser | null>;
+
+  register(input: {
+    name: string;
+    email: string;
+    password: string;
+    role?: Role;
+  }): Promise<AuthUser | null>;
 
   getCurrentUser(): Promise<AuthUser | null>;
 

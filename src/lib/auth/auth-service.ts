@@ -45,7 +45,6 @@ export const authService: AuthService = {
         password,
       );
     } catch {
-      // Invalid or unsupported stored hash: fail closed.
       return null;
     }
 
@@ -67,6 +66,30 @@ export const authService: AuthService = {
     });
 
     await setSessionCookie(token);
+
+    return toPublicUser(user);
+  },
+
+  async register(input): Promise<AuthUser | null> {
+    const normalizedName = input.name.trim();
+    const normalizedEmail = input.email.trim().toLowerCase();
+
+    if (!normalizedName || !normalizedEmail || !input.password) {
+      return null;
+    }
+
+    const existingUser = await userRepository.findByEmail(normalizedEmail);
+    if (existingUser) {
+      return null;
+    }
+
+    const passwordHash = await argon2.hash(input.password);
+    const user = await userRepository.create({
+      name: normalizedName,
+      email: normalizedEmail,
+      passwordHash,
+      role: input.role ?? "EMPLOYEE",
+    });
 
     return toPublicUser(user);
   },

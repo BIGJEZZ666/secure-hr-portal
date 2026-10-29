@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/require-permission";
 import LogoutButton from "./logout-button";
+import RoleManager from "./role-manager";
 
 export default async function DashboardPage() {
   await requirePermission("dashboard:view");
@@ -58,6 +59,8 @@ export default async function DashboardPage() {
           </ul>
         </div>
       </section>
+
+      <RoleManager />
     </main>
   );
 }

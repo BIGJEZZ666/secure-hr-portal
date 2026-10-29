@@ -27,6 +27,33 @@ export const loginSchema = z
   })
   .strict();
 
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "กรุณาระบุชื่อจริงของท่าน")
+      .max(80, "ชื่อตัวอย่างยาวเกินไป"),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("รูปแบบอีเมลไม่ถูกต้อง")
+      .max(254, "อีเมลยาวเกินไป"),
+    password: z
+      .string()
+      .min(8, "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร")
+      .max(128, "รหัสผ่านยาวเกินขีดจำกัด"),
+    confirmPassword: z
+      .string()
+      .min(1, "กรุณายืนยันรหัสผ่าน"),
+  })
+  .strict()
+  .refine((values) => values.password === values.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "ยืนยันรหัสผ่านไม่ตรงกับรหัสผ่านที่กรอก",
+  });
+
 export const createEventSchema = z
   .object({
     title: z
