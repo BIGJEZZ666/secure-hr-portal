@@ -50,7 +50,6 @@ export default async function IndexPage() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/login" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-50">เข้าสู่ระบบ</Link>
             <Link href="/events" className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15">ดู Event</Link>
           </div>
         </div>
