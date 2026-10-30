@@ -2,6 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 
+const demoAccounts = [
+  { role: "CEO", email: "ceo@securehr.local" },
+  { role: "HR", email: "hr@securehr.local" },
+  { role: "EMPLOYEE", email: "employee@securehr.local" },
+];
+
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
@@ -123,6 +129,22 @@ export default function LoginPage() {
             <p className="mt-4 max-w-lg text-sm leading-7 text-blue-50 md:text-base">
               วางระบบควบคุมการเข้าถึงตามบทบาท (CEO / HR / Employee) พร้อมความปลอดภัยของ session, CSRF, XSS และ access-control ตามหลักการ least privilege
             </p>
+
+            <div className="mt-8 grid gap-3">
+              {demoAccounts.map((account) => (
+                <div key={account.role} className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-blue-100">{account.role}</p>
+                      <p className="mt-1 text-sm font-semibold">{account.email}</p>
+                    </div>
+                    <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-medium text-blue-50">
+                      บัญชีทดสอบ
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
 
           </div>
 
