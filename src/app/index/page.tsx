@@ -42,18 +42,6 @@ export default async function IndexPage() {
       </header>
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500 p-8 text-white shadow-xl shadow-blue-200">
-          <p className="text-sm font-medium uppercase tracking-[0.25em] text-blue-100">Access control overview</p>
-          <h2 className="mt-4 text-4xl font-black leading-tight">ยินดีต้อนรับสู่ระบบที่ควบคุมข้อมูลตามบทบาท</h2>
-          <p className="mt-4 max-w-xl text-base leading-8 text-blue-50">
-            ทุกการเข้าถึงข้อมูลถูกจำกัดตามสิทธิ์ของผู้ใช้ เพื่อป้องกัน IDOR, Overexposure และการยกระดับสิทธิ์ที่ไม่จำเป็น
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/events" className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15">ดู Event</Link>
-          </div>
-        </div>
-
         <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-lg shadow-blue-100">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Current role</p>
           <div className="mt-4 flex items-center justify-between border-b border-slate-200 pb-3">
