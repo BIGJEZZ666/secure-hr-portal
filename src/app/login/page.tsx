@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 const demoAccounts = [
   { role: "CEO", email: "ceo@securehr.local" },
@@ -19,7 +18,6 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [csrfToken, setCsrfToken] = useState("");
-  const router = useRouter();
 
   useEffect(() => {
     async function loadCsrfToken() {
@@ -70,8 +68,7 @@ export default function LoginPage() {
       setPassword("");
       setOtp("");
 
-      router.replace("/index");
-      router.refresh();
+      window.location.replace("/index");
     } catch {
       setMessage("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่");
     } finally {

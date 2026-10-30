@@ -16,6 +16,11 @@ export default async function IndexPage() {
   } as const;
 
   const visibleRole = user?.role ?? "EMPLOYEE";
+  const roleDestination = user?.role === "CEO"
+    ? { href: "/dashboard", label: "ไปหน้า Dashboard" }
+    : user?.role === "HR"
+      ? { href: "/events/manage", label: "ไปหน้าจัดการกิจกรรม" }
+      : { href: "/events", label: "ไปหน้ากิจกรรม" };
 
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-10 sm:px-6 lg:px-8">
@@ -29,8 +34,8 @@ export default async function IndexPage() {
           {user ? (
             <>
               <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">{user.role}</span>
-              <Link href={user.role === "CEO" ? "/dashboard" : user.role === "HR" ? "/events/manage" : "/events"} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800">
-                ข้ามไปยังหน้าของฉัน
+              <Link href={roleDestination.href} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800">
+                {roleDestination.label}
               </Link>
             </>
           ) : (
