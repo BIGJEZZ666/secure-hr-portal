@@ -60,7 +60,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password, otp }),
       });
 
-      const result: { message?: string; user?: { role?: string } } = await response.json();
+      const result: { message?: string } = await response.json();
 
       if (!response.ok) {
         setMessage(result.message ?? "ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่");
@@ -70,14 +70,7 @@ export default function LoginPage() {
       setPassword("");
       setOtp("");
 
-      const nextRoute =
-        result.user?.role === "HR"
-          ? "/events/manage"
-          : result.user?.role === "EMPLOYEE"
-            ? "/events"
-            : "/dashboard";
-
-      router.replace(nextRoute);
+      router.replace("/index");
       router.refresh();
     } catch {
       setMessage("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่");
