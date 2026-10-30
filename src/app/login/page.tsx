@@ -2,12 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 
-const demoAccounts = [
-  { role: "CEO", email: "ceo@securehr.local" },
-  { role: "HR", email: "hr@securehr.local" },
-  { role: "EMPLOYEE", email: "employee@securehr.local" },
-];
-
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
