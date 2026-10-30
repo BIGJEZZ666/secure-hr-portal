@@ -1,6 +1,7 @@
 import "server-only";
 
 import { z } from "zod";
+import { EVENT_AUDIENCES } from "@/lib/events/types";
 
 export const loginSchema = z
   .object({
@@ -73,6 +74,8 @@ export const createEventSchema = z
       .trim()
       .min(1, "กรุณาระบุสถานที่")
       .max(200, "สถานที่ยาวเกินไป"),
+
+    audience: z.enum(EVENT_AUDIENCES).default("ALL_STAFF"),
 
     startsAt: z.iso.datetime({
       message: "วันเวลาเริ่มต้นไม่ถูกต้อง",

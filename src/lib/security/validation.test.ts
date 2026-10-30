@@ -77,6 +77,24 @@ describe("createEventSchema", () => {
     expect(createEventSchema.safeParse(validEvent).success).toBe(true);
   });
 
+  it("defaults the audience to all staff", () => {
+    const result = createEventSchema.safeParse(validEvent);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.audience).toBe("ALL_STAFF");
+    }
+  });
+
+  it("rejects an unsupported event audience", () => {
+    expect(
+      createEventSchema.safeParse({
+        ...validEvent,
+        audience: "PUBLIC",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects an end time before the start time", () => {
     const result = createEventSchema.safeParse({
       ...validEvent,
