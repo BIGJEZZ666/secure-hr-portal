@@ -60,6 +60,8 @@ CREATE TABLE `tb_employee` (
   `role_id` int(11) NOT NULL COMMENT 'fk ตำแหน่ง',
   `is_active` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = active, 0 = inactive',
   `two_factor_enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = OTP required',
+  `two_factor_secret` varchar(255) DEFAULT NULL COMMENT 'AES-GCM encrypted TOTP secret',
+  `two_factor_pending_secret` varchar(255) DEFAULT NULL COMMENT 'Encrypted pending TOTP secret',
   `last_login_at` datetime DEFAULT NULL COMMENT 'ล็อกอินล่าสุด',
   `last_activity_at` datetime DEFAULT NULL COMMENT 'เคลื่อนไหวล่าสุด',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -99,8 +101,8 @@ INSERT INTO `tb_employee` (
   `created_at`,
   `updated_at`
 ) VALUES
-(1, 'Alicia CEO', 'ceo@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 1, 1, 1, NOW(), NOW(), NOW(), NOW()),
-(2, 'Ben HR', 'hr@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 2, 1, 1, NOW(), NOW(), NOW(), NOW()),
+(1, 'Alicia CEO', 'ceo@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 1, 1, 0, NOW(), NOW(), NOW(), NOW()),
+(2, 'Ben HR', 'hr@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 2, 1, 0, NOW(), NOW(), NOW(), NOW()),
 (3, 'Chris Employee', 'employee@securehr.local', '$argon2id$v=19$m=65536,p=4,t=3$JIKAHe8KSl7MsrBZnACT8A$jTMgnMQz0oFPp6xRvf79V9CigSo3MzjMJw+u9jufxZI', 3, 1, 0, NOW(), NOW(), NOW(), NOW());
 
 -- --------------------------------------------------------

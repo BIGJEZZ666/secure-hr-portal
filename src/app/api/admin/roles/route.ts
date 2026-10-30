@@ -32,7 +32,7 @@ export async function GET() {
   const employees = await userRepository.listAll();
 
   return NextResponse.json({
-    employees: employees.map((employee) => ({
+    employees: employees.filter((employee) => employee.role !== "CEO").map((employee) => ({
       id: employee.id,
       name: employee.name,
       email: employee.email,

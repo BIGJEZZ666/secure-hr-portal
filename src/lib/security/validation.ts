@@ -21,7 +21,8 @@ export const loginSchema = z
       .trim()
       .optional()
       .refine(
-        (value) => value === undefined || value.length === 6,
+        (value) =>
+          value === undefined || value === "" || /^\d{6}$/.test(value),
         "OTP ต้องเป็นตัวเลข 6 หลัก",
       ),
   })

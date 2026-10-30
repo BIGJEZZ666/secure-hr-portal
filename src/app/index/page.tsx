@@ -59,7 +59,9 @@ export default async function IndexPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">Current role</p>
           <div className="mt-4 flex items-center justify-between border-b border-slate-200 pb-3">
             <span className="text-lg font-bold text-slate-900">{visibleRole}</span>
-            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Authorized</span>
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+              {user ? "Authorized" : "ข้อมูลตัวอย่าง"}
+            </span>
           </div>
 
           <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">

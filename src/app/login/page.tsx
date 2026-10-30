@@ -4,18 +4,18 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 const demoAccounts = [
-  { role: "CEO", email: "ceo@securehr.local", password: "Password123!", otp: "123456" },
-  { role: "HR", email: "hr@securehr.local", password: "Password123!", otp: "123456" },
-  { role: "EMPLOYEE", email: "employee@securehr.local", password: "Password123!", otp: "123456" },
+  { role: "CEO", email: "ceo@securehr.local" },
+  { role: "HR", email: "hr@securehr.local" },
+  { role: "EMPLOYEE", email: "employee@securehr.local" },
 ];
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("ceo@securehr.local");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("Password123!");
-  const [otp, setOtp] = useState("123456");
+  const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [csrfToken, setCsrfToken] = useState("");
@@ -149,7 +149,7 @@ export default function LoginPage() {
                       <p className="mt-1 text-sm font-semibold">{account.email}</p>
                     </div>
                     <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-medium text-blue-50">
-                      OTP: {account.otp}
+                      บัญชีทดสอบ
                     </span>
                   </div>
                 </div>
@@ -218,14 +218,14 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="otp" className="mb-2 block text-sm font-medium text-slate-700">รหัส OTP (6 หลัก)</label>
+                  <label htmlFor="otp" className="mb-2 block text-sm font-medium text-slate-700">รหัส OTP (กรอกเมื่อเปิดใช้ 2FA)</label>
                   <input
                     id="otp"
                     name="otp"
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    placeholder="123456"
+                    placeholder="รหัสจากแอป authenticator"
                     maxLength={6}
                     value={otp}
                     onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/require-permission";
-import LogoutButton from "./logout-button";
 import RoleManager from "./role-manager";
 
 export default async function DashboardPage() {
@@ -24,7 +23,6 @@ export default async function DashboardPage() {
           <Link href="/events" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100">
             ดู Event
           </Link>
-          <LogoutButton />
         </div>
       </div>
 
@@ -46,7 +44,7 @@ export default async function DashboardPage() {
           <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
             <li>• โครงการ HR Security review และการตรวจสอบสิทธิ์ตลอดเดือน</li>
             <li>• บทบาท CEO สามารถเข้าถึงข้อมูลสรุปทั้งหมดได้</li>
-            <li>• บัญชีที่ไม่มีการเคลื่อนไหวเกิน 30 วัน จะถูกยกเลิกการใช้งานและ session</li>
+            <li>• บัญชีที่ไม่มีกิจกรรมครบตามนโยบาย 30–60 วัน จะถูกปิดใช้งานและยกเลิก session</li>
           </ul>
         </div>
 

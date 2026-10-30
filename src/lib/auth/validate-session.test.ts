@@ -73,4 +73,17 @@ describe("validateSession", () => {
       validateSession(session, { ...user, isActive: false }, now),
     ).toBeNull();
   });
+
+  it("rejects a session inactive for more than 30 days", () => {
+    expect(
+      validateSession(
+        {
+          ...session,
+          lastSeenAt: new Date("2026-09-28T23:59:59.999Z"),
+        },
+        user,
+        now,
+      ),
+    ).toBeNull();
+  });
 });

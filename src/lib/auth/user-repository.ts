@@ -1,6 +1,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { sessionStore } from "@/lib/auth/session-store";
 import type {
   StoredUser,
   UserRepository,
@@ -12,6 +13,7 @@ interface EmployeeRow {
   employee_name: string | null;
   employee_email: string;
   password_hash: string;
+  two_factor_secret?: string | null;
   role_name: string | null;
   is_active: number | boolean;
   two_factor_enabled?: number | boolean;
@@ -49,6 +51,7 @@ function mapEmployee(row: EmployeeRow): StoredUser | null {
     role,
     isActive: Number(row.is_active) === 1,
     twoFactorEnabled: Number(row.two_factor_enabled ?? 0) === 1,
+    totpSecret: row.two_factor_secret ?? null,
     lastLoginAt: row.last_login_at ?? null,
     lastActivityAt: row.last_activity_at ?? null,
     passwordHash: row.password_hash,
@@ -63,6 +66,7 @@ const employeeSelect = `
     e.password AS password_hash,
     e.is_active,
     e.two_factor_enabled,
+    e.two_factor_secret,
     e.last_login_at,
     e.last_activity_at,
     r.role_name
@@ -148,7 +152,107 @@ export const userRepository: UserRepository = {
       [roleId, Number(id)],
     );
 
+    await sessionStore.revokeAllForUser(id);
     return this.findById(id);
+  },
+
+  async recordActivity(id: string): Promise<void> {
+    if (!/^\d+$/.test(id)) {
+      return;
+    }
+
+    await db.query(
+      `UPDATE tb_employee
+       SET last_activity_at = UTC_TIMESTAMP()
+       WHERE employee_id = ?
+         AND (last_activity_at IS NULL
+           OR last_activity_at < UTC_TIMESTAMP() - INTERVAL 5 MINUTE)`,
+      [Number(id)],
+    );
+  },
+
+  async recordLogin(id: string): Promise<void> {
+    if (!/^\d+$/.test(id)) {
+      throw new Error("Invalid user ID");
+    }
+
+    await db.query(
+      `UPDATE tb_employee
+       SET last_login_at = UTC_TIMESTAMP(),
+           last_activity_at = UTC_TIMESTAMP()
+       WHERE employee_id = ? AND is_active = 1`,
+      [Number(id)],
+    );
+  },
+
+  async setPendingTotpSecret(id: string, secret: string): Promise<void> {
+    if (!/^\d+$/.test(id) || !secret) {
+      throw new Error("Invalid TOTP enrollment request");
+    }
+
+    await db.query(
+      `UPDATE tb_employee
+       SET two_factor_pending_secret = ?
+       WHERE employee_id = ? AND is_active = 1`,
+      [secret, Number(id)],
+    );
+  },
+
+  async getPendingTotpSecret(id: string): Promise<string | null> {
+    if (!/^\d+$/.test(id)) {
+      return null;
+    }
+
+    const rows = await db.query(
+      `SELECT two_factor_pending_secret
+       FROM tb_employee
+       WHERE employee_id = ? AND is_active = 1
+       LIMIT 1`,
+      [Number(id)],
+    ) as { two_factor_pending_secret: string | null }[];
+
+    return rows[0]?.two_factor_pending_secret ?? null;
+  },
+
+  async enableTotp(id: string): Promise<void> {
+    if (!/^\d+$/.test(id)) {
+      throw new Error("Invalid user ID");
+    }
+
+    await db.query(
+      `UPDATE tb_employee
+       SET two_factor_secret = two_factor_pending_secret,
+           two_factor_pending_secret = NULL,
+           two_factor_enabled = 1,
+           updated_at = UTC_TIMESTAMP()
+       WHERE employee_id = ?
+         AND two_factor_pending_secret IS NOT NULL
+         AND is_active = 1`,
+      [Number(id)],
+    );
+  },
+
+  async deactivateInactiveUsers(inactiveDays: number): Promise<number> {
+    if (!Number.isInteger(inactiveDays) || inactiveDays < 30 || inactiveDays > 60) {
+      throw new Error("Inactive account threshold must be between 30 and 60 days");
+    }
+
+    const cutoff = `UTC_TIMESTAMP() - INTERVAL ${inactiveDays} DAY`;
+    const deactivated = await db.query(
+      `UPDATE tb_employee
+       SET is_active = 0, updated_at = UTC_TIMESTAMP()
+       WHERE is_active = 1
+         AND COALESCE(last_activity_at, last_login_at, created_at) < ${cutoff}`,
+    ) as { affectedRows?: number };
+
+    await db.query(
+      `UPDATE tb_session AS s
+       INNER JOIN tb_employee AS e ON e.employee_id = s.employee_id
+       SET s.revoked_at = UTC_TIMESTAMP()
+       WHERE e.is_active = 0 AND s.revoked_at IS NULL`,
+    );
+
+    return deactivated.affectedRows ?? 0;
   },
 
   async findById(id: string): Promise<StoredUser | null> {

@@ -6,6 +6,7 @@ import type { AuthUser, Role } from "@/types/auth";
  */
 export interface StoredUser extends AuthUser {
   passwordHash: string;
+  totpSecret: string | null;
 }
 
 /**
@@ -44,6 +45,12 @@ export interface UserRepository {
   }): Promise<StoredUser>;
   listAll(): Promise<StoredUser[]>;
   updateRole(id: string, role: Role): Promise<StoredUser | null>;
+  recordActivity(id: string): Promise<void>;
+  recordLogin(id: string): Promise<void>;
+  setPendingTotpSecret(id: string, secret: string): Promise<void>;
+  getPendingTotpSecret(id: string): Promise<string | null>;
+  enableTotp(id: string): Promise<void>;
+  deactivateInactiveUsers(inactiveDays: number): Promise<number>;
 }
 
 /**
@@ -60,6 +67,8 @@ export interface SessionStore {
   revokeByTokenHash(tokenHash: string): Promise<void>;
 
   revokeAllForUser(userId: string): Promise<void>;
+
+  touch(id: string): Promise<void>;
 }
 
 /**
@@ -69,6 +78,7 @@ export interface AuthService {
   authenticate(
     email: string,
     password: string,
+    otp?: string,
   ): Promise<AuthUser | null>;
 
   register(input: {

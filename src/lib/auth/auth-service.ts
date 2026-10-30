@@ -18,6 +18,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
 } from "@/lib/auth/session-cookie";
 import { validateSession } from "@/lib/auth/validate-session";
+import { decryptTotpSecret, verifyTotp } from "@/lib/security/totp";
 import type { AuthUser } from "@/types/auth";
 
 function toPublicUser(user: StoredUser): AuthUser {
@@ -38,6 +39,7 @@ export const authService: AuthService = {
   async authenticate(
     email: string,
     password: string,
+    otp?: string,
   ): Promise<AuthUser | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await userRepository.findByEmail(normalizedEmail);
@@ -61,6 +63,19 @@ export const authService: AuthService = {
       return null;
     }
 
+    if (user.twoFactorEnabled) {
+      if (!user.totpSecret || !otp) {
+        return null;
+      }
+
+      const secret = decryptTotpSecret(user.totpSecret);
+      if (!verifyTotp(secret, otp)) {
+        return null;
+      }
+    }
+
+    await userRepository.recordLogin(user.id);
+
     const token = generateSessionToken();
     const now = new Date();
 
@@ -73,7 +88,7 @@ export const authService: AuthService = {
         now.getTime() + SESSION_MAX_AGE_SECONDS * 1000,
       ),
     });
-
+    await setSessionCookie(token);
     await setSessionCookie(token);
 
     return toPublicUser(user);
@@ -125,6 +140,9 @@ export const authService: AuthService = {
     if (!validUser) {
       return null;
     }
+
+    await sessionStore.touch(session.id);
+    await userRepository.recordActivity(validUser.id);
 
     return toPublicUser(validUser as StoredUser);
   },

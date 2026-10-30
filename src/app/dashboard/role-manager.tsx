@@ -131,7 +131,7 @@ export default function RoleManager() {
                   <td className="px-4 py-3 text-sm">
                     <div className="flex items-center gap-2">
                       <select
-                        defaultValue={employee.role}
+                        value={employee.role}
                         onChange={(event) => updateRole(employee.id, event.target.value)}
                         className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
                       >

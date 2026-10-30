@@ -104,14 +104,16 @@ export const sessionStore: SessionStore = {
         employee_id,
         token_hash,
         created_at,
-        expires_at
-      ) VALUES (?, ?, ?, ?, ?)`,
+        expires_at,
+        last_seen_at
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         Number(input.userId),
         input.tokenHash,
         toDatabaseDate(input.createdAt),
         toDatabaseDate(input.expiresAt),
+        toDatabaseDate(input.createdAt),
       ],
     );
   },
@@ -162,6 +164,22 @@ export const sessionStore: SessionStore = {
        WHERE employee_id = ?
          AND revoked_at IS NULL`,
       [Number(userId)],
+    );
+  },
+
+  async touch(id: string): Promise<void> {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) {
+      throw new Error("Invalid session ID");
+    }
+
+    await db.query(
+      `UPDATE tb_session
+       SET last_seen_at = UTC_TIMESTAMP()
+       WHERE session_id = ?
+         AND revoked_at IS NULL
+         AND (last_seen_at IS NULL
+           OR last_seen_at < UTC_TIMESTAMP() - INTERVAL 5 MINUTE)`,
+      [id],
     );
   },
 };

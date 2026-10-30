@@ -120,19 +120,13 @@ export async function POST(request: NextRequest) {
     const user = await authService.authenticate(
       email,
       parsed.data.password,
+      parsed.data.otp,
     );
 
     if (!user) {
       recordFailure(rateLimitKey);
       return jsonResponse(
-        { message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือบัญชีไม่สามารถใช้งานได้" },
-        401,
-      );
-    }
-
-    if (user.twoFactorEnabled && (!parsed.data.otp || parsed.data.otp !== "123456")) {
-      return jsonResponse(
-        { message: "กรุณาระบุรหัส OTP 6 หลัก (ตัวอย่าง: 123456)" },
+        { message: "อีเมล รหัสผ่าน หรือรหัส OTP ไม่ถูกต้อง หรือบัญชีไม่สามารถใช้งานได้" },
         401,
       );
     }

@@ -33,6 +33,26 @@ describe("loginSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a login without OTP when two-factor authentication is disabled", () => {
+    expect(
+      loginSchema.safeParse({
+        email: "user@example.com",
+        password: "Example-password-123",
+        otp: "",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects non-numeric OTP values", () => {
+    expect(
+      loginSchema.safeParse({
+        email: "user@example.com",
+        password: "Example-password-123",
+        otp: "abc123",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects unexpected fields", () => {
     const result = loginSchema.safeParse({
       email: "user@example.com",
