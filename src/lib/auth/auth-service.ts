@@ -19,6 +19,7 @@ import {
 } from "@/lib/auth/session-cookie";
 import { validateSession } from "@/lib/auth/validate-session";
 import { decryptTotpSecret, verifyTotp } from "@/lib/security/totp";
+import { ACTIVITY_ACTIONS, recordActivity } from "@/lib/auth/activity-log";
 import type { AuthUser } from "@/types/auth";
 
 function toPublicUser(user: StoredUser): AuthUser {
@@ -88,6 +89,20 @@ export const authService: AuthService = {
         now.getTime() + SESSION_MAX_AGE_SECONDS * 1000,
       ),
     });
+
+    try {
+      await recordActivity({
+        employeeId: user.employeeId,
+        action: ACTIVITY_ACTIONS.LOGIN,
+        resourceType: "employee",
+        resourceId: user.employeeId,
+        details: { twoFactorVerified: user.twoFactorEnabled },
+      });
+    } catch (error) {
+      await sessionStore.revokeByTokenHash(hashSessionToken(token));
+      throw error;
+    }
+
     await setSessionCookie(token);
     await setSessionCookie(token);
 
@@ -152,7 +167,23 @@ export const authService: AuthService = {
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (token) {
-      await sessionStore.revokeByTokenHash(hashSessionToken(token));
+      const tokenHash = hashSessionToken(token);
+      const session = await sessionStore.findByTokenHash(tokenHash);
+
+      if (session) {
+        const user = await userRepository.findById(session.userId);
+
+        if (user) {
+          await recordActivity({
+            employeeId: user.employeeId,
+            action: ACTIVITY_ACTIONS.LOGOUT,
+            resourceType: "employee",
+            resourceId: user.employeeId,
+          });
+        }
+      }
+
+      await sessionStore.revokeByTokenHash(tokenHash);
     }
 
     await clearSessionCookie();

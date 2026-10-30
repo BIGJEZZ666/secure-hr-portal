@@ -28,10 +28,21 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `tb_action` (
-  `action_id` int(11) NOT NULL,
+  `action_id` int(11) NOT NULL AUTO_INCREMENT,
   `action_name` varchar(120) NOT NULL,
   `action_type` enum('POST','PUT','GET','DELETE') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `tb_action` (`action_id`, `action_name`, `action_type`) VALUES
+(1, 'เข้าสู่ระบบ', 'POST'),
+(2, 'ออกจากระบบ', 'POST'),
+(3, 'สมัครสมาชิก', 'POST'),
+(4, 'เปลี่ยนบทบาทผู้ใช้', 'PUT'),
+(5, 'HR เพิ่มกิจกรรม', 'POST'),
+(6, 'HR แก้ไขกิจกรรม', 'PUT'),
+(7, 'HR ลบกิจกรรม', 'DELETE'),
+(8, 'Employee ลงทะเบียนเข้ากิจกรรม', 'POST'),
+(9, 'Employee ยกเลิกลงทะเบียนกิจกรรม', 'DELETE');
 
 -- --------------------------------------------------------
 
@@ -43,7 +54,11 @@ CREATE TABLE `tb_activity_log` (
   `log_id` bigint(20) NOT NULL,
   `employee_id` int(11) NOT NULL COMMENT 'fk พนักงาน',
   `action_id` int(11) NOT NULL COMMENT 'fk การกระทำ',
-  `timestamp` datetime NOT NULL COMMENT 'เวลาแบบ datetime ไม่ใช่ timestamp'
+  `timestamp` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'เวลาที่เกิด action แบบ UTC',
+  `target_employee_id` int(11) DEFAULT NULL COMMENT 'พนักงานเป้าหมาย (ถ้ามี)',
+  `resource_type` varchar(40) DEFAULT NULL,
+  `resource_id` varchar(64) DEFAULT NULL,
+  `details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`details`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -129,7 +144,17 @@ CREATE TABLE `tb_session` (
 -- Indexes for table `tb_activity_log`
 --
 ALTER TABLE `tb_activity_log`
-  ADD PRIMARY KEY (`log_id`);
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `idx_tb_activity_employee_time` (`employee_id`,`timestamp`),
+  ADD KEY `idx_tb_activity_action_time` (`action_id`,`timestamp`),
+  ADD KEY `idx_tb_activity_target_employee` (`target_employee_id`);
+
+--
+-- Indexes for table `tb_action`
+--
+ALTER TABLE `tb_action`
+  ADD PRIMARY KEY (`action_id`),
+  ADD UNIQUE KEY `uq_tb_action_name` (`action_name`);
 
 --
 -- Indexes for table `tb_employee`
@@ -187,7 +212,8 @@ ALTER TABLE `tb_employee`
 
 ALTER TABLE `tb_activity_log`
   ADD CONSTRAINT `fk_tb_activity_employee` FOREIGN KEY (`employee_id`) REFERENCES `tb_employee` (`employee_id`),
-  ADD CONSTRAINT `fk_tb_activity_action` FOREIGN KEY (`action_id`) REFERENCES `tb_action` (`action_id`);
+  ADD CONSTRAINT `fk_tb_activity_action` FOREIGN KEY (`action_id`) REFERENCES `tb_action` (`action_id`),
+  ADD CONSTRAINT `fk_tb_activity_target_employee` FOREIGN KEY (`target_employee_id`) REFERENCES `tb_employee` (`employee_id`);
 
 ALTER TABLE `tb_session`
   ADD CONSTRAINT `fk_tb_session_employee` FOREIGN KEY (`employee_id`) REFERENCES `tb_employee` (`employee_id`);

@@ -3,6 +3,7 @@ import { authorize } from "@/lib/auth/authorization";
 import { authService } from "@/lib/auth/auth-service";
 import { userRepository } from "@/lib/auth/user-repository";
 import { validateCsrfRequest } from "@/lib/security/csrf";
+import { ACTIVITY_ACTIONS, recordActivity } from "@/lib/auth/activity-log";
 import type { Role } from "@/types/auth";
 
 export const runtime = "nodejs";
@@ -74,6 +75,15 @@ export async function POST(request: NextRequest) {
   if (!updated) {
     return NextResponse.json({ message: "ไม่พบพนักงานที่ต้องการเปลี่ยนบทบาท" }, { status: 404 });
   }
+
+  await recordActivity({
+    employeeId: allow.user.employeeId,
+    action: ACTIVITY_ACTIONS.ROLE_CHANGE,
+    targetEmployeeId: updated.employeeId,
+    resourceType: "employee",
+    resourceId: updated.employeeId,
+    details: { newRole: updated.role },
+  });
 
   return NextResponse.json({ message: "เปลี่ยนบทบาทสำเร็จ" }, { status: 200 });
 }
