@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { authService } from "@/lib/auth/auth-service";
 import { requirePermission } from "@/lib/auth/require-permission";
+import AccessDeniedDialog from "./access-denied-dialog";
 
-export default async function IndexPage() {
+export default async function IndexPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ accessDenied?: string | string[] }>;
+}) {
+  const query = await searchParams;
   const user = await authService.getCurrentUser();
 
   if (!user) {
@@ -24,6 +30,9 @@ export default async function IndexPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-10 sm:px-6 lg:px-8">
+      <AccessDeniedDialog
+        isOpen={query.accessDenied === "1"}
+      />
       <header className="mb-8 flex flex-col gap-4 rounded-3xl border border-blue-200 bg-white/90 p-6 shadow-lg shadow-blue-100 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-700">Secure HR Portal</p>

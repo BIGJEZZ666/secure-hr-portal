@@ -16,7 +16,7 @@ export async function requirePermission(
       redirect("/login");
     }
 
-    redirect("/access-denied");
+    redirect("/index?accessDenied=1");
   }
 
   return result.user;
